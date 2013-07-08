@@ -47,11 +47,24 @@ public class App {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                     throws IOException {
                 String filename = file.getFileName().toString();
+                Path relativePath = src.relativize(file);
                 if (filename.startsWith(".") || filename.endsWith("~")) {
                     //ignore
+                    System.out.printf("skipping %s%n", relativePath);
                 } else {
                     //System.out.println("filename = " + filename);
-                    localfiles.put(src.relativize(file), new FileStats(attrs));
+                    localfiles.put(relativePath, new FileStats(attrs));
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                String dirName = dir.getFileName().toString();
+                if (dirName.startsWith(".") || dirName.endsWith("~")) {
+                    Path relativePath = src.relativize(dir);
+                    System.out.printf("skipping %s%n", relativePath);
+                    return FileVisitResult.SKIP_SUBTREE;
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -72,22 +85,14 @@ public class App {
         return config;
     }
 
-//    private static void storeConfig(Config config) throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, URISyntaxException {
-//        Properties props = new Properties();
-//        props.putAll(BeanUtils.describe(config));
-//        URL resourceUrl = App.class.getResource(CONFIG_FILE);
-//        File file = new File(resourceUrl.toURI());
-//        try (OutputStream output = new FileOutputStream(file)) {
-//            if (DEBUG) {
-//                props.list(System.out);
-//            }
-//            props.store(output, null);
-//        }
-//    }
-
     private static void uploadFiles(Config config, final Map<Path, FileStats> localfiles, final Path src, final Path dest) throws IOException {
         final SSHClient ssh = new SSHClient();
         //ssh.addHostKeyVerifier(new PromiscuousVerifier());
+        long uploadedCount = 0;
+        long uploadedBytes = 0;
+        long totalCount = 0;
+        long totalBytes = 0;
+
         ssh.addHostKeyVerifier(config.hostKeyVerifier);
         ssh.connect(config.server, config.port);
         try {
@@ -107,13 +112,32 @@ public class App {
                                 .withAtimeMtime(localStats.mtime, localStats.mtime)
                                 .build();
                         sftp.setattr(remotePathString, fileTime);
+                        uploadedCount++;
+                        uploadedBytes += localStats.size;
                     } else {
-                        System.out.printf("skipping  %s%n", relativePath);
+                        System.out.printf("skipping %s%n", relativePath);
                     }
+                    totalCount++;
+                    totalBytes += localStats.size;
                 }
             }
         } finally {
             ssh.disconnect();
         }
+        System.out.printf("uploaded %s/%s items = %s/%s%n",
+                uploadedCount,
+                totalCount,
+                humanReadableByteCount(uploadedBytes, false),
+                humanReadableByteCount(totalBytes, false));
+    }
+
+    public static String humanReadableByteCount(long bytes, boolean si) {
+        int unit = si ? 1000 : 1024;
+        if (bytes < unit) {
+            return bytes + " B";
+        }
+        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i");
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
     }
 }
