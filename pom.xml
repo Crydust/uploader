@@ -4,12 +4,25 @@
 
     <groupId>be.crydust</groupId>
     <artifactId>uploader</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
     <packaging>jar</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <developers>
+        <developer>
+            <name>Kristof Neirynck</name>
+        </developer>
+    </developers>
+    <scm>
+        <url>https://github.com/Crydust/uploader</url>
+    </scm>
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/Crydust/uploader/issues</url>
+    </issueManagement>
 
     <dependencies>
         <dependency>
@@ -55,16 +68,6 @@
             <artifactId>jcl-over-slf4j</artifactId>
             <version>1.7.5</version>
         </dependency>
-        <!--        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk16</artifactId>
-            <version>1.46</version>
-        </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-ext-jdk16</artifactId>
-            <version>1.46</version>
-        </dependency>-->
     </dependencies>
 
     <name>uploader</name>
@@ -80,36 +83,12 @@
                     <target>1.7</target>
                 </configuration>
             </plugin>
-            <!--            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <id>shade</id>
-                        <configuration>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>be.crydust.uploader.App</mainClass>
-                                </transformer>
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>-->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4</version>
                 <configuration>
-<!--                    <archive>
-                        <manifest>
-                            <mainClass>be.crydust.uploader.App</mainClass>
-                        </manifest>
-                    </archive>-->
+                    <finalName>${project.artifactId}</finalName>
+                    <appendAssemblyId>false</appendAssemblyId>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
